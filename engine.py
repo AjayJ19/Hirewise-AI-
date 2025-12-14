@@ -22,7 +22,7 @@ def generate_question(previous_answer: str, resume_data: str) -> str:
     }
     
     data = {
-        "model": "mistral-medium",  # or another valid model if available
+        "model": "open-mistral-7b",  # Changed to free/open model
         "messages": [
             {"role": "system", "content": "You're a professional interviewer. Ask a follow-up question based on the candidate's previous answer and resume details."},
             {"role": "user", "content": f"Candidate's answer: {previous_answer}\nResume: {resume_data}"}
@@ -31,6 +31,8 @@ def generate_question(previous_answer: str, resume_data: str) -> str:
     }
     
     response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
+    if response.status_code != 200:
+        st.error(f"API Error: {response.status_code} - {response.text}")
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
@@ -44,7 +46,7 @@ def generate_feedback(answer: str) -> str:
     }
     
     data = {
-        "model": "mistral-medium",
+        "model": "open-mistral-7b", # Changed to free/open model
         "messages": [
             {"role": "system", "content": "You're an AI interviewer who provides constructive feedback."},
             {"role": "user", "content": f"Please evaluate and provide feedback on the following candidate answer: {answer}"}
@@ -53,6 +55,8 @@ def generate_feedback(answer: str) -> str:
     }
     
     response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
+    if response.status_code != 200:
+        st.error(f"API Error: {response.status_code} - {response.text}")
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
