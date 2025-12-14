@@ -87,12 +87,12 @@ with st.sidebar:
     
     # API Key Handling (Hidden in Expander)
     with st.expander("⚙️ Settings (API Key)", expanded=False):
-        api_key_input = st.text_input("Mistral API Key", type="password", help="Enter your Mistral API Key here if not set in secrets.")
+        api_key_input = st.text_input("Gemini API Key", type="password", help="Enter your Gemini API Key here if not set in secrets.")
         
         # Try to load from secrets if not provided
         if not api_key_input:
             try:
-                api_key = st.secrets["MISTRAL_API_KEY"]
+                api_key = st.secrets["GEMINI_API_KEY"]
                 st.success("Key loaded from Secrets")
             except:
                 api_key = ""
