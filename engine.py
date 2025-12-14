@@ -4,11 +4,15 @@ import streamlit as st
 import os
 
 # Try to get key from Streamlit secrets, otherwise fallback to environment or hardcoded
+DEFAULT_KEY = "3cqS6ejaXUrBGUOsHyId1xCVRkm5OOrN"
 try:
     MISTRAL_API_KEY = st.secrets["MISTRAL_API_KEY"]
 except:
     # Fallback for local testing if secrets.toml doesn't exist
-    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "3cqS6ejaXUrBGUOsHyId1xCVRkm5OOrN")
+    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", DEFAULT_KEY)
+
+if MISTRAL_API_KEY == DEFAULT_KEY:
+    st.warning("⚠️ You are using the default invalid API key. Please configure 'MISTRAL_API_KEY' in Streamlit Secrets.")
 
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
 
@@ -31,8 +35,12 @@ def generate_question(previous_answer: str, resume_data: str) -> str:
     }
     
     response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
-    if response.status_code != 200:
+    if response.status_code == 401:
+        st.error("🚨 Authentication Failed! Please add your 'MISTRAL_API_KEY' in Streamlit Secrets.")
+        st.stop()
+    elif response.status_code != 200:
         st.error(f"API Error: {response.status_code} - {response.text}")
+        
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
@@ -55,8 +63,12 @@ def generate_feedback(answer: str) -> str:
     }
     
     response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
-    if response.status_code != 200:
+    if response.status_code == 401:
+        st.error("🚨 Authentication Failed! Please add your 'MISTRAL_API_KEY' in Streamlit Secrets.")
+        st.stop()
+    elif response.status_code != 200:
         st.error(f"API Error: {response.status_code} - {response.text}")
+        
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
