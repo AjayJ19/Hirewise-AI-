@@ -85,19 +85,27 @@ with st.sidebar:
     st.title("🎯 HireWise AI")
     st.write("Smart Interview Assistant")
     
-    # API Key Handling
-    api_key = st.text_input("Mistral API Key", type="password", help="Enter your Mistral API Key here if not set in secrets.")
-    
-    # Try to load from secrets if not provided
-    if not api_key:
-        try:
-            api_key = st.secrets["MISTRAL_API_KEY"]
-            st.success("API Key loaded from Secrets ✅")
-        except:
-            st.warning("⚠️ No API Key found in Secrets.")
+    # API Key Handling (Hidden in Expander)
+    with st.expander("⚙️ Settings (API Key)", expanded=False):
+        api_key_input = st.text_input("Mistral API Key", type="password", help="Enter your Mistral API Key here if not set in secrets.")
+        
+        # Try to load from secrets if not provided
+        if not api_key_input:
+            try:
+                api_key = st.secrets["MISTRAL_API_KEY"]
+                st.success("Key loaded from Secrets")
+            except:
+                api_key = ""
+                st.warning("No Key in Secrets")
+        else:
+            api_key = api_key_input
             
-    # Simulation Mode
-    simulated_mode = st.checkbox("Simulated Mode (No API required)", value=False, help="Check this to test the UI without an API key.")
+        # Simulation Mode
+        simulated_mode = st.checkbox("Simulated Mode", value=False, help="Test UI without API key.")
+
+    # Clean the key
+    if api_key:
+        api_key = api_key.strip()
 
     uploaded_file = st.file_uploader("Upload Resume (PDF)", type="pdf")
     
@@ -117,12 +125,13 @@ with st.sidebar:
     if st.session_state.resume_data and not st.session_state.interview_active:
         if st.button("Start Interview", type="primary"):
             if not api_key and not simulated_mode:
-                st.error("Please enter an API Key or enable Simulated Mode.")
+                st.error("Please configure API Key in Settings or enable Simulated Mode.")
             else:
                 st.session_state.interview_active = True
                 st.session_state.question_count = 0
                 st.session_state.answers = []
                 st.session_state.messages = []
+                st.session_state.last_processed = None # Reset duplication check
                 
                 # First question
                 first_q = "Tell me about yourself."
@@ -169,7 +178,10 @@ if st.session_state.interview_active and st.session_state.question_count < 5:
     elif text_input:
         user_answer = text_input
 
-    if user_answer:
+    # Duplication Check
+    if user_answer and user_answer != st.session_state.get("last_processed"):
+        st.session_state.last_processed = user_answer
+        
         # Add user answer to chat
         st.session_state.messages.append({"role": "user", "content": user_answer})
         st.session_state.answers.append(user_answer)
