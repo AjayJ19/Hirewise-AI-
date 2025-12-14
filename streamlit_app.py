@@ -137,7 +137,8 @@ if st.session_state.interview_active and st.session_state.question_count < 5:
     audio_input = mic_recorder(
         start_prompt="🎤 Start Recording",
         stop_prompt="⏹️ Stop Recording",
-        key='recorder'
+        key='recorder',
+        format='wav'
     )
     
     # Text Input Fallback
