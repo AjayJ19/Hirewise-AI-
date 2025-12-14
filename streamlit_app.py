@@ -85,6 +85,20 @@ with st.sidebar:
     st.title("🎯 HireWise AI")
     st.write("Smart Interview Assistant")
     
+    # API Key Handling
+    api_key = st.text_input("Mistral API Key", type="password", help="Enter your Mistral API Key here if not set in secrets.")
+    
+    # Try to load from secrets if not provided
+    if not api_key:
+        try:
+            api_key = st.secrets["MISTRAL_API_KEY"]
+            st.success("API Key loaded from Secrets ✅")
+        except:
+            st.warning("⚠️ No API Key found in Secrets.")
+            
+    # Simulation Mode
+    simulated_mode = st.checkbox("Simulated Mode (No API required)", value=False, help="Check this to test the UI without an API key.")
+
     uploaded_file = st.file_uploader("Upload Resume (PDF)", type="pdf")
     
     if uploaded_file is not None:
@@ -102,16 +116,19 @@ with st.sidebar:
 
     if st.session_state.resume_data and not st.session_state.interview_active:
         if st.button("Start Interview", type="primary"):
-            st.session_state.interview_active = True
-            st.session_state.question_count = 0
-            st.session_state.answers = []
-            st.session_state.messages = []
-            
-            # First question
-            first_q = "Tell me about yourself."
-            st.session_state.current_question = first_q
-            st.session_state.messages.append({"role": "assistant", "content": first_q})
-            st.rerun()
+            if not api_key and not simulated_mode:
+                st.error("Please enter an API Key or enable Simulated Mode.")
+            else:
+                st.session_state.interview_active = True
+                st.session_state.question_count = 0
+                st.session_state.answers = []
+                st.session_state.messages = []
+                
+                # First question
+                first_q = "Tell me about yourself."
+                st.session_state.current_question = first_q
+                st.session_state.messages.append({"role": "assistant", "content": first_q})
+                st.rerun()
 
     if st.session_state.interview_active:
         st.progress(st.session_state.question_count / 5, text=f"Question {st.session_state.question_count + 1}/5")
@@ -162,18 +179,22 @@ if st.session_state.interview_active and st.session_state.question_count < 5:
             
             # Generate feedback every 2 questions
             if (st.session_state.question_count + 1) % 2 == 0:
-                feedback = generate_feedback(" ".join(st.session_state.answers[-2:]))
-                st.session_state.messages.append({"role": "assistant", "content": f"🧠 **Feedback:** {feedback}"})
+                if simulated_mode:
+                    feedback = "This is a simulated feedback message. Your answer was recorded."
+                else:
+                    feedback = generate_feedback(" ".join(st.session_state.answers[-2:]), api_key)
                 
-                # Audio for feedback (optional, might be too long)
-                # audio_bytes = text_to_speech(feedback)
-                # st.session_state.messages[-1]["audio"] = audio_bytes
+                st.session_state.messages.append({"role": "assistant", "content": f"🧠 **Feedback:** {feedback}"})
 
             st.session_state.question_count += 1
             
             if st.session_state.question_count < 5:
                 # Generate next question
-                next_q = generate_question(user_answer, st.session_state.resume_data)
+                if simulated_mode:
+                    next_q = f"This is simulated question #{st.session_state.question_count + 1}. Tell me more about your experience."
+                else:
+                    next_q = generate_question(user_answer, st.session_state.resume_data, api_key)
+                
                 st.session_state.current_question = next_q
                 
                 # Generate audio for question
@@ -186,7 +207,11 @@ if st.session_state.interview_active and st.session_state.question_count < 5:
                 })
             else:
                 # Final Feedback
-                final_feedback = generate_feedback(" ".join(st.session_state.answers))
+                if simulated_mode:
+                    final_feedback = "This is simulated final feedback. Good job!"
+                else:
+                    final_feedback = generate_feedback(" ".join(st.session_state.answers), api_key)
+                
                 st.session_state.messages.append({"role": "assistant", "content": f"🏁 **Final Feedback:** {final_feedback}"})
                 
                 # Score

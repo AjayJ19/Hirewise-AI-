@@ -1,36 +1,19 @@
 import requests
-
 import streamlit as st
-import os
-
-# Try to get key from Streamlit secrets, otherwise fallback to environment or hardcoded
-DEFAULT_KEY = "3cqS6ejaXUrBGUOsHyId1xCVRkm5OOrN"
-try:
-    MISTRAL_API_KEY = st.secrets["MISTRAL_API_KEY"]
-except:
-    # Fallback for local testing if secrets.toml doesn't exist
-    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", DEFAULT_KEY)
-
-if MISTRAL_API_KEY == DEFAULT_KEY:
-    st.warning("⚠️ You are using the default invalid API key. Please configure 'MISTRAL_API_KEY' in Streamlit Secrets.")
-else:
-    # Debug: Show what key is being used (masked)
-    masked_key = MISTRAL_API_KEY[:4] + "..." + MISTRAL_API_KEY[-4:] if len(MISTRAL_API_KEY) > 8 else "****"
-    st.info(f"ℹ️ Using API Key starting with: `{masked_key}`. If this is not your key, check Streamlit Secrets.")
 
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
 
-def generate_question(previous_answer: str, resume_data: str) -> str:
+def generate_question(previous_answer: str, resume_data: str, api_key: str) -> str:
     """
     Generate a follow-up interview question based on the candidate's previous answer and resume data.
     """
     headers = {
-        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     
     data = {
-        "model": "open-mistral-7b",  # Changed to free/open model
+        "model": "open-mistral-7b",
         "messages": [
             {"role": "system", "content": "You're a professional interviewer. Ask a follow-up question based on the candidate's previous answer and resume details."},
             {"role": "user", "content": f"Candidate's answer: {previous_answer}\nResume: {resume_data}"}
@@ -38,27 +21,29 @@ def generate_question(previous_answer: str, resume_data: str) -> str:
         "max_tokens": 200
     }
     
-    response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
-    if response.status_code == 401:
-        st.error("🚨 Authentication Failed! Please add your 'MISTRAL_API_KEY' in Streamlit Secrets.")
-        st.stop()
-    elif response.status_code != 200:
-        st.error(f"API Error: {response.status_code} - {response.text}")
-        
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    try:
+        response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
+        if response.status_code == 401:
+            return "🚨 Authentication Failed: Invalid API Key."
+        elif response.status_code != 200:
+            return f"🚨 API Error: {response.text}"
+            
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"🚨 Connection Error: {str(e)}"
 
-def generate_feedback(answer: str) -> str:
+def generate_feedback(answer: str, api_key: str) -> str:
     """
     Generate feedback on the candidate's answer.
     """
     headers = {
-        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     
     data = {
-        "model": "open-mistral-7b", # Changed to free/open model
+        "model": "open-mistral-7b",
         "messages": [
             {"role": "system", "content": "You're an AI interviewer who provides constructive feedback."},
             {"role": "user", "content": f"Please evaluate and provide feedback on the following candidate answer: {answer}"}
@@ -66,15 +51,17 @@ def generate_feedback(answer: str) -> str:
         "max_tokens": 200
     }
     
-    response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
-    if response.status_code == 401:
-        st.error("🚨 Authentication Failed! Please add your 'MISTRAL_API_KEY' in Streamlit Secrets.")
-        st.stop()
-    elif response.status_code != 200:
-        st.error(f"API Error: {response.status_code} - {response.text}")
-        
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    try:
+        response = requests.post(MISTRAL_API_URL, json=data, headers=headers, timeout=60)
+        if response.status_code == 401:
+            return "🚨 Authentication Failed: Invalid API Key."
+        elif response.status_code != 200:
+            return f"🚨 API Error: {response.text}"
+            
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"🚨 Connection Error: {str(e)}"
 
 # Optional test when running the module directly
 if __name__ == "__main__":
