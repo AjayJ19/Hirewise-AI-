@@ -1,0 +1,12 @@
+textblob
+nltk
+requests
+time
+pyttsx3
+speech_recognition
+fitz
+re
+sklearn
+sentence_transformers
+tkinter
+threading

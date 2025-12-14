@@ -1,0 +1,12 @@
+textblob
+nltk
+requests
+SpeechRecognition
+PyMuPDF
+scikit-learn
+# Install CPU-only PyTorch to save space on Netlify
+torch --index-url https://download.pytorch.org/whl/cpu
+sentence_transformers
+streamlit
+gTTS
+streamlit-mic-recorder
