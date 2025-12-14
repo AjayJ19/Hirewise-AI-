@@ -95,8 +95,9 @@ with st.sidebar:
                 api_key = st.secrets["GEMINI_API_KEY"]
                 st.success("Key loaded from Secrets")
             except:
-                api_key = ""
-                st.warning("No Key in Secrets")
+                # Fallback to provided hardcoded key
+                api_key = "AIzaSyCpxYzcgkVPk1X8QiC05Rc6-KNd-np81i8"
+                st.info("Using embedded API Key")
         else:
             api_key = api_key_input
             
