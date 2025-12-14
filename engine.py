@@ -13,6 +13,10 @@ except:
 
 if MISTRAL_API_KEY == DEFAULT_KEY:
     st.warning("⚠️ You are using the default invalid API key. Please configure 'MISTRAL_API_KEY' in Streamlit Secrets.")
+else:
+    # Debug: Show what key is being used (masked)
+    masked_key = MISTRAL_API_KEY[:4] + "..." + MISTRAL_API_KEY[-4:] if len(MISTRAL_API_KEY) > 8 else "****"
+    st.info(f"ℹ️ Using API Key starting with: `{masked_key}`. If this is not your key, check Streamlit Secrets.")
 
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
 
