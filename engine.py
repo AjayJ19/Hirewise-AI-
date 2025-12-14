@@ -1,7 +1,15 @@
 import requests
 
-# Replace with your actual Mistral API key
-MISTRAL_API_KEY = "3cqS6ejaXUrBGUOsHyId1xCVRkm5OOrN"
+import streamlit as st
+import os
+
+# Try to get key from Streamlit secrets, otherwise fallback to environment or hardcoded
+try:
+    MISTRAL_API_KEY = st.secrets["MISTRAL_API_KEY"]
+except:
+    # Fallback for local testing if secrets.toml doesn't exist
+    MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "3cqS6ejaXUrBGUOsHyId1xCVRkm5OOrN")
+
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
 
 def generate_question(previous_answer: str, resume_data: str) -> str:
